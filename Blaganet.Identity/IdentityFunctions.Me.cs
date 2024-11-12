@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.OpenApi.Models;
 
 namespace Blaganet.Identity;
 
@@ -15,6 +16,7 @@ internal partial class IdentityFunctions
 
     [Function(nameof(Profile))]
     [OpenApiOperation(nameof(Profile), Auth, Description = "Profile information")]
+    [OpenApiParameter(IdentityDefaults.HeaderName, In = ParameterLocation.Header, Required = true, Description = "Access token for authorization")]
     [OpenApiResponseWithoutBody(HttpStatusCode.Unauthorized)]
     [OpenApiResponseWithBody(HttpStatusCode.OK, MediaTypeNames.Application.Json, typeof(MeResponse))]
     public Task<Results<Ok<MeResponse>, UnauthorizedHttpResult>> Profile(

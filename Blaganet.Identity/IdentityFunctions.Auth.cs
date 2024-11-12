@@ -57,7 +57,8 @@ internal partial class IdentityFunctions
 
     private async Task<Results<Ok<AuthenticationTicket>, BadRequest>> IssueTicket(string login)
     {
-        var user = await userManager.FindByNameAsync(login);
+        var user = await userManager.FindByNameAsync(login)
+            ?? await userManager.FindByEmailAsync(login);
         if (user is null)
         {
             return TypedResults.BadRequest();
