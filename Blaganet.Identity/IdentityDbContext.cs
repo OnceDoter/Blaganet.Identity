@@ -22,6 +22,13 @@ internal sealed class IdentityDbContext : Microsoft.AspNetCore.Identity.EntityFr
     {
         base.OnConfiguring(optionsBuilder);
 
-        optionsBuilder.UseSqlServer("Server=tcp:pasha.database.windows.net,1433;Initial Catalog=pasha-db;Persist Security Info=False;User ID=pasha;Password=$Tr[6jxR$VsB8c^;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+        optionsBuilder.UseSqlServer(
+            "Server=tcp:pasha.database.windows.net,1433;Initial Catalog=pasha-db;Persist Security Info=False;User ID=pasha;Password=$Tr[6jxR$VsB8c^;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;",
+            static options =>
+            {
+                options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                options.UseAzureSqlDefaults();
+                options.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+            });
     }
 }

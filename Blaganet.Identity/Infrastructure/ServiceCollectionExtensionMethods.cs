@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Collections.Frozen;
+using Blaganet.Identity.Adapters;
+using Blaganet.Identity.Configuration;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Abstractions;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Configurations;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
@@ -32,7 +36,11 @@ public static class ServiceCollectionExtensionMethods
             .AddIdentityCore<IdentityUser>()
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<IdentityDbContext>()
-            .AddSignInManager<IdentityFunctions.SignInManager>();
+            .AddClaimsPrincipalFactory<IdentityFunctions.UserClaimsPrincipalFactory>()
+            .AddSignInManager();
+
+        services.AddSingleton<FrozenDictionary<string, FunctionOptions>>(
+            _ => GetFunctionOptions().ToFrozenDictionary(option => option.Name));
         
         return services;
     }
@@ -47,5 +55,32 @@ public static class ServiceCollectionExtensionMethods
             });
 
         return services;
+    }
+    
+    public static IServiceCollection AddAdapters(this IServiceCollection services)
+    {
+        services.AddScoped<HttpContext, FunctionHttpContext>();
+        return services;
+    }
+
+    private static IEnumerable<FunctionOptions> GetFunctionOptions()
+    {
+        yield return new FunctionOptions
+        {
+            Name = nameof(IdentityFunctions.SingUp),
+            Anonymous = true,
+        };
+
+        yield return new FunctionOptions
+        {
+            Name = nameof(IdentityFunctions.SingIn),
+            Anonymous = true,
+        };
+
+        yield return new FunctionOptions
+        {
+            Name = nameof(IdentityFunctions.Assign),
+            Requirements = [IdentityDefaults.Roles.SystemAdministrator]
+        };
     }
 }

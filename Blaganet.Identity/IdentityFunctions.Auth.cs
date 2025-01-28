@@ -1,9 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Net;
 using System.Net.Mime;
-using System.Security.Claims;
 using Blaganet.Identity.Contract;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -40,47 +38,17 @@ internal partial class IdentityFunctions
         return TypedResults.Ok();
     }
     
-    [Function(nameof(Me))]
-    [OpenApiOperation(nameof(Me), Auth, Description = "Sing in")]
+    [Function(nameof(SingIn))]
+    [OpenApiOperation(nameof(SingIn), Auth, Description = "Sing in")]
     [OpenApiRequestBody(MediaTypeNames.Application.Json, typeof(SingInRequest))]
     [OpenApiResponseWithoutBody(HttpStatusCode.OK)]
     [OpenApiResponseWithBody(HttpStatusCode.BadRequest, MediaTypeNames.Application.Json, typeof(ValidationProblem))]
-    public async Task<Results<Ok<AuthenticationTicket>, BadRequest>> SingIn(
+    public async Task SingIn(
         [HttpTrigger(AuthorizationLevel.Anonymous,"post", Route = $"{Auth}/signin")] HttpRequestData requestData,
         [FromBody] SingInRequest request,
         CancellationToken ct)
     {
         await signInManager.PasswordSignInAsync(request.Email, request.Password, true, lockoutOnFailure: true);
-
-        return await IssueTicket(request.Email);
-    }
-
-    private async Task<Results<Ok<AuthenticationTicket>, BadRequest>> IssueTicket(string login)
-    {
-        var user = await userManager.FindByNameAsync(login)
-            ?? await userManager.FindByEmailAsync(login);
-        if (user is null)
-        {
-            return TypedResults.BadRequest();
-        }
-
-        var userPrincipal = await signInManager.CreateUserPrincipalAsync(user);
-        var roles = await userManager.GetRolesAsync(user);
-        
-        userPrincipal.Identities.First().AddClaims([
-            new Claim("amr", "pwd"),
-            new Claim(IdentityDefaults.Claims.UserEmail, user.Email ?? string.Empty),
-            new Claim(IdentityDefaults.Claims.UserName, user.UserName ?? string.Empty),
-            new Claim(IdentityDefaults.Claims.UserPhone, user.PhoneNumber ?? string.Empty),
-            new Claim(IdentityDefaults.Claims.UserPhoneConfirmed, user.PhoneNumberConfirmed.ToString()),
-            new Claim(IdentityDefaults.Claims.UserRoles, string.Join(IdentityDefaults.Claims.Delemiter, roles)),
-        ]);
-
-        return TypedResults.Ok(
-            new AuthenticationTicket(
-                userPrincipal,
-                new AuthenticationProperties { IsPersistent = true },
-                IdentityConstants.ApplicationScheme));
     }
     
     private static ValidationProblem CreateValidationProblem(IdentityResult result)

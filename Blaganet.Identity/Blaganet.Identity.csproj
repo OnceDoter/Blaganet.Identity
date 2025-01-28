@@ -45,6 +45,9 @@
       <Compile Update="IdentityFunctions.Auth.cs">
         <DependentUpon>IdentityFunctions.cs</DependentUpon>
       </Compile>
+      <Compile Update="IdentityFunctions.Roles.cs">
+        <DependentUpon>IdentityFunctions.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\Blaganet.Identity.Contract\Blaganet.Identity.Contract.csproj" />

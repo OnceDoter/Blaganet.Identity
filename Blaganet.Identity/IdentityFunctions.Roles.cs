@@ -28,17 +28,6 @@ internal partial class IdentityFunctions
         [FromBody] string[] roles,
         CancellationToken ct)
     {
-        var checkResult = await CheckPerformerRole(IdentityDefaults.Roles.SystemAdministrator);
-        if (checkResult.Result is UnauthorizedHttpResult unauthorized)
-        {
-            return unauthorized;
-        }
-        
-        if (checkResult.Result is BadRequest badRequest)
-        {
-            return badRequest;
-        }
-
         var user = await userManager.FindByIdAsync(identifier)
                    ?? await userManager.FindByNameAsync(identifier)
                    ?? await userManager.FindByEmailAsync(identifier);
@@ -49,22 +38,5 @@ internal partial class IdentityFunctions
         
         await userManager.AddToRolesAsync(user, roles);
         return TypedResults.Created(Roles, (await userManager.GetRolesAsync(user)).ToArray());
-    }
-
-    private Task<Results<UnauthorizedHttpResult, BadRequest, Ok>> CheckPerformerRole(string role)
-    {
-        if (context.Principal is null)
-        {
-            return Task.FromResult<Results<UnauthorizedHttpResult, BadRequest, Ok>>(TypedResults.Unauthorized());
-        }
-
-        var performerRoles =  context.Principal.FindFirst(IdentityDefaults.Claims.UserRoles)?.Value
-            .Split(IdentityDefaults.Claims.Delemiter) ?? [];
-        if (!performerRoles.Contains(role))
-        {
-            return Task.FromResult<Results<UnauthorizedHttpResult, BadRequest, Ok>>(TypedResults.Unauthorized());
-        }
-        
-        return Task.FromResult<Results<UnauthorizedHttpResult, BadRequest, Ok>>(TypedResults.Ok());
     }
 }
